@@ -3,7 +3,7 @@ Weak SINDy model discovery for weather data
 
 ![changing_scales_fine](https://github.com/user-attachments/assets/ae67286a-1e1b-443a-b71c-bfdc63f2483c)
 
-Code accompanying a pre-print paper "Learning Weather Models from Data with Weak SINDy" (a full version is currently under review) available here: https://arxiv.org/abs/2501.00738
+Code accompanying pre-print paper "Learning Weather Models from Data with Weak SINDy" (currently under review), available at: https://arxiv.org/abs/2501.00738
 
 ArXiv citation:
 ```
@@ -17,6 +17,14 @@ ArXiv citation:
       url={https://arxiv.org/abs/2501.00738}, 
 }
 ```
+
+See the tutorial here: https://github.com/SethMinor/PyWSINDy-for-PDEs/blob/main/WSINDy_Tutorial.ipynb
+
+Find the example data at:
+- `barotropic_wsindy` https://pyqg.readthedocs.io/en/latest/examples/barotropic.html
+- `full_globe_wsindy` https://cds.climate.copernicus.eu/datasets/reanalysis-era5-pressure-levels?tab=overview
+- `geophysical_wsindy` https://turbulence.idies.jhu.edu/datasets/geophysicalTurbulence/sabl
+- `swe_wsindy` https://dedalus-project.readthedocs.io/en/latest/pages/examples/ivp_sphere_shallow_water.html
 
 ###### This algorithm uses the following dependencies:
 ```python
