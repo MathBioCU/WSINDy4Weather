@@ -3,6 +3,21 @@ Weak SINDy model discovery for weather data
 
 ![changing_scales_fine](https://github.com/user-attachments/assets/ae67286a-1e1b-443a-b71c-bfdc63f2483c)
 
+Code accompanying a pre-print paper "Learning Weather Models from Data with Weak SINDy" (a full version is currently under review) available here: https://arxiv.org/abs/2501.00738
+
+ArXiv citation:
+```
+@misc{minor2025learningweathermodelsdata,
+      title={Learning Weather Models from Data with WSINDy}, 
+      author={Seth Minor and Daniel A. Messenger and Vanja Dukic and David M. Bortz},
+      year={2025},
+      eprint={2501.00738},
+      archivePrefix={arXiv},
+      primaryClass={physics.geo-ph},
+      url={https://arxiv.org/abs/2501.00738}, 
+}
+```
+
 ###### This algorithm uses the following dependencies:
 ```python
 import torch
