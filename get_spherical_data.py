@@ -31,14 +31,14 @@ import dedalus.public as d3
 import logging
 logger = logging.getLogger(__name__)
 
-#IMPORT FILES
-H = np.loadtxt('/home/seth/Downloads/swe_dedalus/height.csv', delimiter=',')
-U = np.loadtxt('/home/seth/Downloads/swe_dedalus/u.csv', delimiter=',')
-V = np.loadtxt('/home/seth/Downloads/swe_dedalus/v.csv', delimiter=',')
-(Nx, Ny) = (256, 128)
-H = H.reshape(Nx, Ny, 360)
-U = U.reshape(Nx, Ny, 360)
-V = V.reshape(Nx, Ny, 360)
+#IMPORT FILES (if forecasting)
+#H = np.loadtxt('/home/seth/Downloads/swe_dedalus/height.csv', delimiter=',')
+#U = np.loadtxt('/home/seth/Downloads/swe_dedalus/u.csv', delimiter=',')
+#V = np.loadtxt('/home/seth/Downloads/swe_dedalus/v.csv', delimiter=',')
+#(Nx, Ny) = (256, 128)
+#H = H.reshape(Nx, Ny, 360)
+#U = U.reshape(Nx, Ny, 360)
+#V = V.reshape(Nx, Ny, 360)
 
 # Simulation units
 meter = 1 / 6.37122e6
@@ -55,19 +55,19 @@ Omega = 7.292e-5 / second
 #b2 = 0.9999168208028693 # LEARNED WSINDY WEIGHT
 #b = (b1+b2)/2
 nu = 1e5 * meter**2 / second / 32**2 # Hyperdiffusion matched at ell=32
-#g = 9.80616 * meter / second**2
+g = 9.80616 * meter / second**2
 #g1 = 19.96199408528276 # LEARNED WSINDY WEIGHT
 #g2 = 19.945569498904298 # LEARNED WSINDY WEIGHT
 #g = (g1+g2)/2
-#H0 = 1e4 * meter
-H0 = 0.0015696175076758553 # LEARNED WSINDY WEIGHT
+H0 = 1e4 * meter
+#H0 = 0.0015696175076758553 # LEARNED WSINDY WEIGHT
 #wh = 0.999093369855723 # LEARNED WSINDY WEIGHT
 #a1 = 1.0001428874864389 # LEARNED WSINDY WEIGHT
 #a2 = 0.9999676864732384 # LEARNED WSINDY WEIGHT
 #a = (a1+a2)/2
 timestep = 600 * second
-#stop_sim_time = 360 * hour
-stop_sim_time = 180 * hour
+stop_sim_time = 360 * hour # Original simulation
+#stop_sim_time = 180 * hour # Forecast
 dtype = np.float64
 
 # Bases
@@ -82,17 +82,44 @@ h = dist.Field(name='h', bases=basis)
 # Substitutions
 zcross = lambda A: d3.MulCosine(d3.skew(A))
 
-# Initial conditions
+# Initial conditions: zonal jet
 phi, theta = dist.local_grids(basis)
-u['g'][0] = U[:,:,-1]
-u['g'][1] = V[:,:,-1]
-h['g'] = H[:,:,-1]
+# Original simulation
+lat = np.pi / 2 - theta + 0*phi
+umax = 80 * meter / second
+lat0 = np.pi / 7
+lat1 = np.pi / 2 - lat0
+en = np.exp(-4 / (lat1 - lat0)**2)
+jet = (lat0 <= lat) * (lat <= lat1)
+u_jet = umax / en * np.exp(1 / (lat[jet] - lat0) / (lat[jet] - lat1))
+u['g'][0][jet]  = u_jet
+# Forecast
+#u['g'][0] = U[:,:,-1]
+#u['g'][1] = V[:,:,-1]
+
+# Initial conditions: balanced height
+c = dist.Field(name='c')
+problem = d3.LBVP([h, c], namespace=locals())
+problem.add_equation("g*lap(h) + c = - div(u@grad(u) + 2*Omega*zcross(u))")
+problem.add_equation("ave(h) = 0")
+solver = problem.build_solver()
+solver.solve()
+
+# Initial conditions: perturbation
+# Original simulation
+lat2 = np.pi / 4
+hpert = 120 * meter
+alpha = 1 / 3
+beta = 1 / 15
+h['g'] += hpert * np.cos(lat) * np.exp(-(phi/alpha)**2) * np.exp(-((lat2-lat)/beta)**2)
+# Forecasting
+#h['g'] = H[:,:,-1]
 
 # Problem
 problem = d3.IVP([u, h], namespace=locals())
 # TRUE MODELS
-#problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h) + 2*Omega*zcross(u) = - u@grad(u)")
-#problem.add_equation("dt(h) + nu*lap(lap(h)) + H0*div(u) = - div(h*u)")
+problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h) + 2*Omega*zcross(u) = - u@grad(u)")
+problem.add_equation("dt(h) + nu*lap(lap(h)) + H0*div(u) = - div(h*u)")
 # LEARNED WSINDY MODELS
 #problem.add_equation("dt(u) + nu*lap(lap(u)) + g*grad(h) + b*2*Omega*zcross(u) = - a*u@grad(u)")
 #problem.add_equation("dt(h) + nu*lap(lap(h)) + H0*div(u) = - wh*div(h*u)")
